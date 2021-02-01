@@ -7,7 +7,7 @@ class Regression:
     
     def __init__(self, fit_intercept=True, solver='gd', penalty ='none',
                  alpha=1, eta=1e-4, tol=1e-6, max_iter=1e7, standardize=False,
-                 stop_criterial='mse', calcul_mse=False):
+                 stop_criteria='mse', calcul_mse=True):
         
         """Linear Regression (least squares) based on gradient descent solver 
             with options L1 and L2 regulations 
@@ -42,6 +42,12 @@ class Regression:
         Standardize features by removing the mean and scaling to 
         unit variance
         
+        stop_criteria: {'mse', 'weights'}, default='mse'
+        Stop criteria for gradient descent
+        
+        calcul_mse : bool, default=True
+        Whether to calculate MSE for each iteration of gradient descent steps
+        
         
         Attributes
         ----------
@@ -67,50 +73,53 @@ class Regression:
         self.max_iter = max_iter
         self.tol = tol
         self.standardize = standardize
-        self.stop_criterial = stop_criterial
+        self.stop_criteria = stop_criteria
         self.calcul_mse = calcul_mse
         
         self.error = []
         self.coef_ = None
         self.intercept_ = None
-        self.rank_ = None
         self.flag = None
         self.mean = None
         self.norm = None
         self.iteration = None
-        
+
+
     def gradient(self, X, y, w):
         
-        grad = np.sum((np.dot(X, w) - y) * X, axis=0).reshape(X.shape[1], 1) \
-        / X.shape[0]
+        if self.solver == 'gd':
+            grad = np.sum((np.dot(X, w) - y) * X, axis=0)
+            grad = grad.reshape(X.shape[1], 1) / X.shape[0]
+            
+        if self.solver == 'sgd':
+            ind = np.random.randint(X.shape[0])
+            grad = (np.dot(X[ind], w) - y[ind]) * X[ind]
+            grad = grad[:, np.newaxis]
         
         if self.penalty == 'none':
             
             return grad
         
         if self.penalty == 'l2':
-            
             weights = w.copy()
-            weights[0] = 0
+            if self.fit_intercept:
+                weights[0] = 0
             
             return grad + self.alpha * weights
                 
         if self.penalty == 'l1':
-            
             weights = w.copy()
-            weights[0] = 0
+            if self.fit_intercept:
+                weights[0] = 0
             weights = np.sign(weights)
             
             return grad + self.alpha * weights
         
-    def stochastic_gradient(self, x, y, w):
         
-        random_ind = np.random.randint(self.X.shape[0])
-        
-        grad = (np.dot(x[random_ind], w) - y[random_ind]) * x[random_ind]
-        
-        return grad[:, np.newaxis]
-        
+    def get_rank(X):
+        return np.linalg.matrix_rank(X)
+
+  
     def mse(X, y, w):
         return np.sum(np.square(np.dot(X, w) - y)) / X.shape[0]
                 
@@ -125,34 +134,20 @@ class Regression:
         y : ndarray
             Target labels.
         """
-        
-        self.X = X.copy()
-        self.y = y.copy()
-            
-        self.y = self.y[:, np.newaxis]
+
+        y = y[:, np.newaxis]
             
         if self.standardize:
-            
-            self.mean = np.mean(self.X, axis=0)
-            self.norm = np.std(self.X, axis=0)
-            self.X = (self.X - self.mean) / self.norm
+            self.mean = np.mean(X, axis=0)
+            self.norm = np.std(X, axis=0)
+            self.X = (X - self.mean) / self.norm
         
         if self.fit_intercept:
-            
-            inter_column = np.ones(self.X.shape[0])[:, np.newaxis]
-            self.X = np.hstack((inter_column, self.X))
-            
-        self.rank_ = np.linalg.matrix_rank(self.X)
+            inter_column = np.ones(X.shape[0])[:, np.newaxis]
+            X = np.hstack((inter_column, X))
 
-
-        
-        if self.solver == 'gd':
-            step = self.gradient
             
-        if self.solver == 'sgd':
-            step = self.stochastic_gradient
-            
-        w_init = np.random.normal(0, 0.1, self.X.shape[1])[:, np.newaxis]
+        w_init = np.random.normal(0, 0.1, X.shape[1])[:, np.newaxis]
             
         w = w_init
         
@@ -162,17 +157,17 @@ class Regression:
             
             w_prev = w.copy()
             
-            w -= self.eta * step(self.X, self.y, w)
+            w -= self.eta * self.gradient(X, y, w)
             
             if self.calcul_mse:
-                self.error.append(Regression.mse(self.X, self.y, w))
+                self.error.append(Regression.mse(X, y, w))
             
-            if self.stop_criterial == 'mse':
+            if self.stop_criteria == 'mse' and iteration != 0:
                 if np.abs(self.error[-1] - self.error[-2]) < self.tol:
                     self.flag = 'mse'
                     break
                     
-            if self.stop_criterial == 'weights':
+            if self.stop_criteria == 'weights':
                 if np.linalg.norm(w_prev - w) < self.tol:
                     self.flag = 'weights'
                     break
@@ -193,10 +188,7 @@ class Regression:
     def predict(self, X):
         
         if self.fit_intercept:
-            X = X.copy()
-            inter_column = np.ones(X.shape[0])
-            inter_column = inter_column[:, np.newaxis]
+            inter_column = np.ones(X.shape[0])[:, np.newaxis]
             X = np.hstack((inter_column, X))
 
-                
         return np.dot(X, self.w)
