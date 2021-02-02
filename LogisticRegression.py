@@ -1,8 +1,7 @@
 
 
 import numpy as np
-import matplotlib.pyplot as plt
-import pandas as pd
+
 
 class LogisticRegression:
     
@@ -226,32 +225,6 @@ class LogisticRegression:
         prediction = self.sigmoid(X, self.w)
         
         return prediction
-
-
-# data = pd.read_csv("/t_data/train.csv")
-# X = data[['Pclass', 'SibSp', 'Fare']].to_numpy()
-# y = data['Survived'].to_numpy()
-
-# test = LogisticRegression(fit_intercept=True, penalty='l2', C=1.1, solver='sag',
-#                 l_r=1e-6, tolerance=1e-5, max_iterarion=1e5, gamma = 0.08,
-#                 stop_criteria='ema', calcul_logloss=True,
-#                 random_state = 123)
-
-
-# test.fit(X, y)
-
-# print(test.iteration)
-# print(test.flag)
-
-# plt.plot(test.error)
-
-
-# print(test.predict(X[:4,]))
-
-# print(test.predict_proba(X[:4,]))
-
-
-
 
 
 

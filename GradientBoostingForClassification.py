@@ -4,12 +4,6 @@ import RegressionTree as RT
 import numpy as np
 
 
-
-import pandas as pd
-
-import matplotlib.pyplot as plt
-
-
 class GradientBoosting():
     
     def __init__(self, max_depth = 2, n_estimators = 10, learning_rate = 0.1, min_size=10):
@@ -86,25 +80,6 @@ class GradientBoosting():
     def predict_proba(self):
         pass
             
-            
-# data = pd.read_csv("/t_data/train.csv")
-# X = data[['Pclass', 'SibSp', 'Fare']].to_numpy()
-# y = data['Survived'].to_numpy()
-
-# test = GradientBoosting(max_depth=1, n_estimators = 5, min_size=10)
-# test.fit(X, y)
-
-# # print(test.iteration)
-# # print(test.flag)
-
-# # plt.plot(test.error)
-
-# print(X[:2,])
-# print()
-# print('result', test.predict(X[:2,]))
-
-# #print(test.predict_proba(X[:4,]))
-
 
             
             
